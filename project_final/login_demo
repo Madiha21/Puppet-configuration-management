@@ -1,0 +1,58 @@
+#!/usr/bin/expect
+
+
+##FUNCTION TO LOGIN INTO ROUTER##
+proc login {ip} {
+
+##STARTS TELNET PROCESS## 
+spawn telnet $ip
+
+expect "Password:" {send "mayur\r"}
+
+expect ">" {send "enable\r"}
+
+expect "Password:" {send "mayur123\r"}
+expect "#" {send "terminal length 0\r"}
+expect "#" {send "show running-config\r"}
+expect "#" {send "\r"}
+
+##EXTRACTING THE OUTPUT OF PREVIOUS SEND##
+set a $expect_out(buffer)
+puts $a
+
+##TO GENERATE RANDOM NUMBER##
+set rand_no [expr int(rand()*100)]
+set file1 "config_$rand_no.cfg"
+set file2 "inter_$rand_no.txt"
+
+##OPENING THE FILE##
+set fp [open "file1" w]
+puts $fp "$a"
+
+close $fp 
+
+##SED TO REMOVE THE CONTROL CHARACTERS FROM THE FILE##
+exec /bin/sed {s/[[:cntrl:]]//g} file1 >> $file1
+
+expect "#" {send "show ip interface brief\r"}
+expect "#"
+
+set b $expect_out(buffer)
+#puts $b
+
+set fp [open "file2" w]
+puts $fp "$b"
+close $fp
+
+exec /bin/sed {s/[[:cntrl:]]//g}  file2 >> $file2
+
+##REMOVING THE FILE##
+exec rm -rf file1
+exec rm -rf file2
+
+}
+
+##FUNCTION CALLING##
+login 20.0.0.2
+login 20.0.0.3
+login 20.0.0.4
